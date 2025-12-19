@@ -1,0 +1,14 @@
+.card {
+    padding: 10px;
+    display: inline-block;
+}
+.card img {
+    border-radius: 50%;
+    width: 180px;
+    height: 180px;
+}
+
+.title {
+    text-align: center;
+    font-weight:bold;
+}

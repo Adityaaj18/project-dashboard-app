@@ -1,0 +1,42 @@
+.app {
+    margin: auto;
+    width: 500px;
+}
+.header {
+    text-align: center;
+}
+  
+.form-input {
+    font-size: 16px;
+    padding: 5px;
+    box-sizing: border-box;
+    width: 80%;
+}
+.form-submit {
+    padding: 8px;
+    background-color: green;
+    color: white;
+    border: none;
+    margin-left: 5px; 
+}
+.todolist {
+    width: 96%;
+    list-style: none;
+}
+.todo {
+    border-radius: 5px;
+    margin: 5px 0px;
+    background-color: #e8e8e8;
+    position: relative;
+    padding: 15px;
+}
+.todo-delete {
+    padding: 8px;
+    display: inline-block;
+    border: none;
+    background-color: red;
+    color: white;
+    position: absolute;
+    right: 20px;
+    top: 8px;
+}
