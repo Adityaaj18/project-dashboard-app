@@ -19,7 +19,8 @@ const createTables = () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
+      password TEXT,
+      google_id TEXT UNIQUE,
       avatar TEXT,
       role TEXT DEFAULT 'Developer',
       department TEXT DEFAULT 'Engineering',
@@ -30,6 +31,17 @@ const createTables = () => {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Add google_id column if it doesn't exist (for existing databases)
+  try {
+    // Note: Cannot add UNIQUE constraint via ALTER TABLE in SQLite
+    db.exec(`ALTER TABLE users ADD COLUMN google_id TEXT`);
+  } catch (error) {
+    // Column already exists, ignore error
+  }
+
+  // Make password nullable for Google OAuth users (for existing databases)
+  // Note: SQLite doesn't support ALTER COLUMN, so this is handled in the app logic
 
   // Projects table
   db.exec(`

@@ -9,6 +9,7 @@ import ProjectsPage from "./pages/ProjectsPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import AuthCallbackPage from "./pages/AuthCallbackPage.jsx";
 import { DataProvider } from "./context/DataContext.jsx";
 
 import "./style.css";
@@ -21,6 +22,7 @@ const AppContent = ({ user, isLoading }) => {
         <main className="main-content">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route
               path="/"
               element={

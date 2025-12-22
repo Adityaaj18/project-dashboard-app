@@ -6,7 +6,19 @@
       "Bash(npm run build:*)",
       "Bash(del Login.jsx)",
       "Bash(ren:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(if exist database.db del database.db)",
+      "Bash(del database.db)",
+      "Bash(node fix-database.js:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill /F /PID 4060)",
+      "Bash(taskkill //F //PID 4060)",
+      "Bash(taskkill //F //PID 6428)",
+      "Bash(npm start)",
+      "Bash(taskkill:*)"
     ]
   }
 }

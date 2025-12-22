@@ -19,12 +19,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
+        const parsedData = JSON.parse(storedUser);
         // Validate that parsed data has expected structure
-        if (parsedUser && typeof parsedUser === 'object' && parsedUser.id) {
-          setUser(parsedUser.user); // Store user object without token
+        // The stored data is { user: {...}, token: '...' }
+        if (parsedData && typeof parsedData === 'object' && parsedData.user && parsedData.user.id) {
+          setUser(parsedData.user); // Store user object without token
         } else {
           // Invalid user data, clear it
+          console.warn('Invalid user data structure in localStorage:', parsedData);
           localStorage.removeItem('user');
         }
       }
@@ -82,10 +84,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = () => {
-    // Google OAuth would be implemented here
-    return new Promise((resolve, reject) => {
-      reject(new Error('Google login not yet implemented. Please use the backend API to add this feature.'));
-    });
+    // Redirect to backend Google OAuth endpoint
+    const backendUrl = 'http://localhost:5000';
+    window.location.href = `${backendUrl}/api/auth/google`;
   };
 
   const logout = () => {
