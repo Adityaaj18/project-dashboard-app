@@ -4,11 +4,11 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const {ModuleFederationPlugin} = require("webpack").container;
 
-module.exports = { 
+module.exports = {
   mode: "development",
   entry: path.resolve(__dirname, "src", "index.js"),
   output: {
-    path: path.resolve(__dirname, ".dist"), 
+    path: path.resolve(__dirname, ".dist"),
     filename: "[name].bundle.js",
   },
   devServer: {
@@ -16,16 +16,20 @@ module.exports = {
       directory: path.resolve(__dirname, ".dist"),
     },
     open: true,
-    port: 3003,
+    port: 3005,
     historyApiFallback: true,
   },
   plugins: [
     new ModuleFederationPlugin({
-      name: "DashboardApp",
+      name: "AuthApp",
       filename: "remoteEntry.js",
       exposes: {
-        "./DashboardApp": "./src/DashboardApp.jsx"
-      },  
+        "./AuthContext": "./src/context/AuthContext.jsx",
+        "./Login": "./src/components/Login.jsx",
+        "./Register": "./src/components/Register.jsx",
+        "./Profile": "./src/components/Profile.jsx",
+        "./Settings": "./src/components/Settings.jsx"
+      },
       shared: {
         react: {
           singleton: true,

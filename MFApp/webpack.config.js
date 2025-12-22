@@ -23,13 +23,26 @@ module.exports = {
     new ModuleFederationPlugin({
       name: "MFHost",
       filename: "remoteEntry.js",
-      remotes: {
-        "DetailCardInHost" : "commonComponents@http://localhost:3001/remoteEntry.js",
-        "ShortCardInHost" : "commonComponents@http://localhost:3001/remoteEntry.js",
-        "TodoAppHost": "ToDoApp@http://localhost:3002/remoteEntry.js",
-        "DashboardAppHost": "DashboardApp@http://localhost:3003/remoteEntry.js"
+      exposes: {
+        "./DataContext": "./src/context/DataContext.jsx"
       },
-      shared: ["react", "react-dom"]
+      remotes: {
+        "DashboardAppHost": "DashboardApp@http://localhost:3003/remoteEntry.js",
+        "ProjectAppHost": "ProjectApp@http://localhost:3004/remoteEntry.js",
+        "AuthAppHost": "AuthApp@http://localhost:3005/remoteEntry.js"
+      },
+      shared: {
+        react: {
+          singleton: true,
+          requiredVersion: false,
+          eager: true
+        },
+        "react-dom": {
+          singleton: true,
+          requiredVersion: false,
+          eager: true
+        }
+      }
     }),
     new MiniCssExtractPlugin(),
     new HtmlWebpackPlugin({
