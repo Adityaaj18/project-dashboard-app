@@ -18,7 +18,15 @@
       "Bash(taskkill //F //PID 4060)",
       "Bash(taskkill //F //PID 6428)",
       "Bash(npm start)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(dir:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(cmd //c stop-all.bat)",
+      "Bash(mkdir:*)",
+      "Bash(copy:*)",
+      "Bash(node change-role.js:*)",
+      "Bash(start-all.bat)"
     ]
   }
 }

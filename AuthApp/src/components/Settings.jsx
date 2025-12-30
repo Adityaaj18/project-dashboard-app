@@ -13,6 +13,14 @@ const Settings = () => {
     language: 'en'
   });
   const [saved, setSaved] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   const handleToggle = (key) => {
     setSettings({
@@ -33,6 +41,71 @@ const Settings = () => {
     localStorage.setItem('userSettings', JSON.stringify(settings));
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    // Validation
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setPasswordError('All fields are required');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    try {
+      // Get token from localStorage
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const token = userData.token;
+
+      if (!token) {
+        setPasswordError('Not authenticated. Please log in again.');
+        return;
+      }
+
+      const response = await fetch('http://localhost:5000/api/auth/change-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setPasswordSuccess('Password changed successfully!');
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setTimeout(() => {
+          setShowChangePassword(false);
+          setPasswordSuccess('');
+        }, 2000);
+      } else {
+        setPasswordError(data.message || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Change password error:', error);
+      setPasswordError('An error occurred. Please try again.');
+    }
   };
 
   if (!user) {
@@ -182,7 +255,12 @@ const Settings = () => {
                 <h4>Change Password</h4>
                 <p>Update your account password</p>
               </div>
-              <button className="secondary-button">Change Password</button>
+              <button
+                className="secondary-button"
+                onClick={() => setShowChangePassword(true)}
+              >
+                Change Password
+              </button>
             </div>
 
             <div className="setting-item">
@@ -209,6 +287,84 @@ const Settings = () => {
           </button>
         </div>
       </div>
+
+      {showChangePassword && (
+        <div className="modal-overlay" onClick={() => setShowChangePassword(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Change Password</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowChangePassword(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="password-form">
+              {passwordError && (
+                <div className="error-message">{passwordError}</div>
+              )}
+              {passwordSuccess && (
+                <div className="success-message">{passwordSuccess}</div>
+              )}
+
+              <div className="form-group">
+                <label>Current Password</label>
+                <input
+                  type="password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value
+                  })}
+                  placeholder="Enter current password"
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-group">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value
+                  })}
+                  placeholder="Enter new password (min 6 characters)"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value
+                  })}
+                  placeholder="Confirm new password"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit" className="primary-button">
+                  Change Password
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setShowChangePassword(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

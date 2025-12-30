@@ -11,10 +11,14 @@ const ProjectApp = ({ dataContext }) => {
   const addTaskToProject = dataContext?.addTask;
   const deleteTaskFromProject = dataContext?.deleteTask;
   const addProjectToContext = dataContext?.addProject;
+  const updateProjectInContext = dataContext?.updateProject;
+  const deleteProjectFromContext = dataContext?.deleteProject;
 
   const [selectedProject, setSelectedProject] = useState(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -91,6 +95,55 @@ const ProjectApp = ({ dataContext }) => {
     }
   };
 
+  const updateProject = async (projectId, updates) => {
+    if (updateProjectInContext) {
+      try {
+        await updateProjectInContext(projectId, updates);
+        setEditingProject(null);
+      } catch (error) {
+        console.error('Error updating project:', error);
+        alert('Failed to update project: ' + error.message);
+      }
+    }
+  };
+
+  const deleteProject = async (projectId) => {
+    if (deleteProjectFromContext) {
+      try {
+        await deleteProjectFromContext(projectId);
+        setShowDeleteConfirm(null);
+        if (selectedProject === projectId) {
+          setSelectedProject(null);
+        }
+      } catch (error) {
+        console.error('Error deleting project:', error);
+        alert('Failed to delete project: ' + error.message);
+      }
+    }
+  };
+
+  const startEditProject = (project) => {
+    setEditingProject({
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      status: project.status
+    });
+  };
+
+  const saveEditProject = async () => {
+    if (!editingProject.name.trim()) {
+      alert('Project name is required');
+      return;
+    }
+
+    await updateProject(editingProject.id, {
+      name: editingProject.name,
+      description: editingProject.description,
+      status: editingProject.status
+    });
+  };
+
   const selectedProjectData = selectedProject
     ? projects.find(p => p.id === selectedProject)
     : null;
@@ -153,22 +206,103 @@ const ProjectApp = ({ dataContext }) => {
             ) : (
               projects.map(project => {
                 const taskCounts = getTaskCounts(project.tasks);
+                const isEditing = editingProject?.id === project.id;
+
                 return (
                   <div
                     key={project.id}
                     className={`project-item ${selectedProject === project.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedProject(project.id)}
                   >
-                    <div className="project-item-header">
-                      <h4>{project.name}</h4>
-                      <span className="task-count-badge">{taskCounts.total}</span>
-                    </div>
-                    <p className="project-item-description">{project.description}</p>
-                    <div className="project-item-stats">
-                      <span className="stat-badge todo">{taskCounts.todo} To Do</span>
-                      <span className="stat-badge in-progress">{taskCounts.inProgress} In Progress</span>
-                      <span className="stat-badge done">{taskCounts.done} Done</span>
-                    </div>
+                    {isEditing ? (
+                      <div className="edit-project-form">
+                        <input
+                          type="text"
+                          placeholder="Project Name *"
+                          value={editingProject.name}
+                          onChange={(e) => setEditingProject({...editingProject, name: e.target.value})}
+                        />
+                        <textarea
+                          placeholder="Description (optional)"
+                          value={editingProject.description}
+                          onChange={(e) => setEditingProject({...editingProject, description: e.target.value})}
+                          rows="3"
+                        />
+                        <select
+                          value={editingProject.status}
+                          onChange={(e) => setEditingProject({...editingProject, status: e.target.value})}
+                        >
+                          <option value="active">Active</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                        <div className="edit-project-actions">
+                          <button className="save-btn" onClick={saveEditProject}>Save</button>
+                          <button className="cancel-btn" onClick={() => setEditingProject(null)}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div onClick={() => setSelectedProject(project.id)}>
+                          <div className="project-item-header">
+                            <h4>{project.name}</h4>
+                            <span className="task-count-badge">{taskCounts.total}</span>
+                          </div>
+                          <p className="project-item-description">{project.description}</p>
+                          <div className="project-item-stats">
+                            <span className="stat-badge todo">{taskCounts.todo} To Do</span>
+                            <span className="stat-badge in-progress">{taskCounts.inProgress} In Progress</span>
+                            <span className="stat-badge done">{taskCounts.done} Done</span>
+                          </div>
+                        </div>
+                        <div className="project-item-actions">
+                          <button
+                            className="edit-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditProject(project);
+                            }}
+                            title="Edit project"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowDeleteConfirm(project.id);
+                            }}
+                            title="Delete project"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+
+                        {showDeleteConfirm === project.id && (
+                          <div className="delete-confirm-overlay">
+                            <div className="delete-confirm-dialog">
+                              <h4>Delete Project?</h4>
+                              <p>Are you sure you want to delete "{project.name}"? This will also delete all tasks in this project.</p>
+                              <div className="delete-confirm-actions">
+                                <button
+                                  className="confirm-delete-btn"
+                                  onClick={() => deleteProject(project.id)}
+                                >
+                                  Delete
+                                </button>
+                                <button
+                                  className="cancel-delete-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowDeleteConfirm(null);
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 );
               })

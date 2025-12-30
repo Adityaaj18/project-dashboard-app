@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: mfe-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - JWT_EXPIRES_IN=7d
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+    volumes:
+      - ./backend/database.db:/app/database.db
+    restart: unless-stopped
+    networks:
+      - mfe-network
+
+  # AuthApp (Remote Microfrontend)
+  authapp:
+    build: ./AuthApp
+    container_name: mfe-authapp
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+    networks:
+      - mfe-network
+    depends_on:
+      - backend
+
+  # ProjectApp (Remote Microfrontend)
+  projectapp:
+    build: ./ProjectApp
+    container_name: mfe-projectapp
+    ports:
+      - "3002:80"
+    restart: unless-stopped
+    networks:
+      - mfe-network
+    depends_on:
+      - backend
+
+  # MFApp (Host/Shell)
+  mfapp:
+    build: ./MFApp
+    container_name: mfe-host
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    networks:
+      - mfe-network
+    depends_on:
+      - authapp
+      - projectapp
+      - backend
+
+networks:
+  mfe-network:
+    driver: bridge

@@ -59,6 +59,9 @@ const Profile = () => {
             <img src={user.avatar} alt={user.name} className="profile-avatar" />
             <h3>{user.name}</h3>
             <p className="profile-email">{user.email}</p>
+            <span className={`role-badge role-${user.role?.toLowerCase().replace(/\s+/g, '-')}`}>
+              {user.role || 'Developer'}
+            </span>
             {user.provider && (
               <span className="provider-badge">
                 Signed in with {user.provider === 'google' ? 'Google' : 'Email'}
@@ -125,13 +128,18 @@ const Profile = () => {
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="role">Role/Title</label>
-                    <input
-                      type="text"
+                    <select
                       id="role"
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
-                    />
+                    >
+                      <option value="Admin">Admin</option>
+                      <option value="Manager">Manager</option>
+                      <option value="Team Lead">Team Lead</option>
+                      <option value="Developer">Developer</option>
+                      <option value="Viewer">Viewer</option>
+                    </select>
                   </div>
                   <div className="form-group">
                     <label htmlFor="department">Department</label>

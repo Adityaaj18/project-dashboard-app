@@ -1,0 +1,22 @@
+{
+  "name": "microfrontend-app",
+  "version": "1.0.0",
+  "description": "Microfrontend application with Module Federation",
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../MFApp && npm install && cd ../AuthApp && npm install && cd ../ProjectApp && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:mfapp\" \"npm run dev:authapp\" \"npm run dev:projectapp\"",
+    "dev:backend": "cd backend && npm start",
+    "dev:mfapp": "cd MFApp && npm start",
+    "dev:authapp": "cd AuthApp && npm start",
+    "dev:projectapp": "cd ProjectApp && npm start",
+    "build:all": "cd MFApp && npm run build && cd ../AuthApp && npm run build && cd ../ProjectApp && npm run build",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "author": "",
+  "license": "ISC"
+}

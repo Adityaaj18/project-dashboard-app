@@ -1,24 +1,48 @@
 import db from '../config/database.js';
+import { canPerformAction, ROLES } from '../config/permissions.js';
 
 // Get all projects for the authenticated user
 export const getProjects = (req, res) => {
   try {
     const userId = req.user.id;
+    const userRole = req.user.role;
 
-    const projects = db.prepare(`
-      SELECT
-        p.id,
-        p.name,
-        p.description,
-        p.status,
-        COUNT(t.id) as totalTasks,
-        SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) as completedTasks
-      FROM projects p
-      LEFT JOIN tasks t ON p.id = t.project_id
-      WHERE p.user_id = ?
-      GROUP BY p.id
-      ORDER BY p.created_at DESC
-    `).all(userId);
+    let projects;
+
+    // Admins, Managers, and Team Leads can see all projects
+    if ([ROLES.ADMIN, ROLES.MANAGER, ROLES.TEAM_LEAD].includes(userRole)) {
+      projects = db.prepare(`
+        SELECT
+          p.id,
+          p.name,
+          p.description,
+          p.status,
+          p.user_id,
+          COUNT(t.id) as totalTasks,
+          SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) as completedTasks
+        FROM projects p
+        LEFT JOIN tasks t ON p.id = t.project_id
+        GROUP BY p.id
+        ORDER BY p.created_at DESC
+      `).all();
+    } else {
+      // Developers and Viewers can only see their own projects
+      projects = db.prepare(`
+        SELECT
+          p.id,
+          p.name,
+          p.description,
+          p.status,
+          p.user_id,
+          COUNT(t.id) as totalTasks,
+          SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) as completedTasks
+        FROM projects p
+        LEFT JOIN tasks t ON p.id = t.project_id
+        WHERE p.user_id = ?
+        GROUP BY p.id
+        ORDER BY p.created_at DESC
+      `).all(userId);
+    }
 
     // Get tasks for each project
     const projectsWithTasks = projects.map(project => {
@@ -162,13 +186,25 @@ export const updateProject = (req, res) => {
     const { id } = req.params;
     const { name, description, status } = req.body;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
-    // Check if project exists and belongs to user
-    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND user_id = ?').get(id, userId);
+    // Get project
+    const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
     if (!project) {
       return res.status(404).json({
         success: false,
         message: 'Project not found'
+      });
+    }
+
+    // Check permissions
+    const isOwner = project.user_id === userId;
+    const canEdit = canPerformAction(userRole, 'edit', 'project', isOwner);
+
+    if (!canEdit) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to edit this project'
       });
     }
 
@@ -196,9 +232,9 @@ export const updateProject = (req, res) => {
     }
 
     updates.push('updated_at = CURRENT_TIMESTAMP');
-    values.push(id, userId);
+    values.push(id);
 
-    const query = `UPDATE projects SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`;
+    const query = `UPDATE projects SET ${updates.join(', ')} WHERE id = ?`;
     db.prepare(query).run(...values);
 
     // Get updated project with tasks
@@ -241,9 +277,10 @@ export const deleteProject = (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
-    // Check if project exists and belongs to user
-    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND user_id = ?').get(id, userId);
+    // Get project
+    const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
     if (!project) {
       return res.status(404).json({
         success: false,
@@ -251,8 +288,19 @@ export const deleteProject = (req, res) => {
       });
     }
 
+    // Check permissions
+    const isOwner = project.user_id === userId;
+    const canDelete = canPerformAction(userRole, 'delete', 'project', isOwner);
+
+    if (!canDelete) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to delete this project'
+      });
+    }
+
     // Delete project (tasks will be deleted automatically due to CASCADE)
-    db.prepare('DELETE FROM projects WHERE id = ? AND user_id = ?').run(id, userId);
+    db.prepare('DELETE FROM projects WHERE id = ?').run(id);
 
     res.json({
       success: true,
